@@ -1,26 +1,18 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from 'react';
+import { RouterContext, RouterView } from 'mobx-state-router';
+import { initRouter } from './initRouter';
+import { viewMap } from './viewMap';
+interface AppState {}
+class App extends Component<{}, AppState> {
+    private routerStore = initRouter(); // Initialize the router store
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    render() {
+        return (
+            <RouterContext.Provider value={this.routerStore}>
+                <RouterView viewMap={viewMap} /> {/* Pass the viewMap here */}
+            </RouterContext.Provider>
+        );
+    }
 }
 
 export default App;
