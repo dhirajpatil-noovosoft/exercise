@@ -1,38 +1,48 @@
 import React, { Component } from "react";
 import { observer } from "mobx-react";
 import ApiStore from "./ApiStore";
-import {CartPage} from "./CartPage";
-import { Navigate } from "react-router-dom";
-import {RouterContext, useRouterStore} from 'mobx-state-router';
-import {toJS} from "mobx";
+import {RouterContext} from 'mobx-state-router';
+import fetchCategories from "../methods/fetchCategories";
+import ProductView from "./ProductView";
+import UserStore from "./UserStore";
 interface SearchPageProps {
 }
 
 @observer
 class SearchPage extends Component<SearchPageProps> {
+    constructor(props:any) {
+        super(props);
+        this.handleUser = this.handleUser.bind(this);
+    }
     apiStore = ApiStore;
+    userStore = UserStore;
     searchQuery: string = "";
     selectedCategory: string = "";
+    selectedUser:string="1";
     categories: { slug: string; name: string; url: string }[] = [];
-    showCart: boolean = false; // Toggle between pages
-    username: string = '';
-
     static contextType = RouterContext;
-
-    constructor(props: SearchPageProps) {
-        super(props);
+    // user related things
+    handleUser(event:React.ChangeEvent<HTMLSelectElement>){
+        let userIDNew = event.target.value
+        this.apiStore.setParticularCart(event.target.value)
+        console.log("cart is ",  this.apiStore.cart[Number(userIDNew)])
+        this.selectedUser = userIDNew
+        this.apiStore.setSelectedUser(userIDNew)
+        console.log("new user is ", this.apiStore.selectedUser, userIDNew)
     }
 
-    componentDidMount() {
-        this.fetchProducts();
-        this.fetchCategories();
+    async componentDidMount() {
+        await this.fetchProducts();
+        await this.fetchCategories();
+        this.userStore = UserStore
+        await this.userStore.fetchUsers()
+        await this.apiStore.setSelectedUser(this.selectedUser)
     }
 
     fetchCategories = async () => {
         try {
-            const response = await fetch("https://dummyjson.com/products/categories");
-            const categories = await response.json();
-            this.setCategories(categories);
+            const got = await fetchCategories();
+            this.setCategories(got);
         } catch (error) {
             console.error("Failed to fetch categories:", error);
         }
@@ -43,21 +53,21 @@ class SearchPage extends Component<SearchPageProps> {
         this.filterProductsByText(query);
     };
 
-    setSelectedCategory = (category: string) => {
+    setSelectedCategory = async(category: string) => {
         this.selectedCategory = category;
-        this.fetchProducts();
+        await this.fetchProducts();
     };
 
     setCategories = (categories: { slug: string; name: string; url: string }[]) => {
         this.categories = categories;
     };
 
-    fetchProducts = () => {
-        let url = "https://dummyjson.com/products";
+    fetchProducts = async () => {
+        let url = "https://dummyjson.com/products?limit=0";
         if (this.selectedCategory) {
             url = `https://dummyjson.com/products/category/${this.selectedCategory}`;
         }
-        this.apiStore.fetchData(url);
+        await this.apiStore.fetchData(url);
     };
 
     filterProductsByText = (query: string) => {
@@ -65,6 +75,7 @@ class SearchPage extends Component<SearchPageProps> {
             product.title.toLowerCase().includes(query.toLowerCase()) ||
             product.description.toLowerCase().includes(query.toLowerCase())
         );
+        console.log(filteredData)
         this.apiStore.setNewData(filteredData);
     };
 
@@ -83,8 +94,9 @@ class SearchPage extends Component<SearchPageProps> {
     };
 
     renderSearchPage() {
-        const { searchQuery, selectedCategory, categories } = this;
-        const totalItemsInCart = this.apiStore.cart.reduce((acc, item) => acc + item.quantity, 0);
+        console.log("new render")
+        const { searchQuery, selectedCategory, categories, selectedUser } = this;
+        const totalItemsInCart : number = 0
         const c: any = this.context;
         return (
             <div>
@@ -93,13 +105,13 @@ class SearchPage extends Component<SearchPageProps> {
                     value={searchQuery}
                     onChange={this.handleSearchChange}
                     placeholder="Search for products"
-                    style={{padding: "8px", width: "300px", marginBottom: "20px"}}
+                    style={{padding: "8px", width: "60%", marginBottom: "20px"}}
                 />
 
                 <select
                     value={selectedCategory}
                     onChange={this.handleCategoryChange}
-                    style={{padding: "8px", marginBottom: "20px", marginLeft: "10px"}}
+                    style={{padding: "8px", width: "20%", marginBottom: "20px", marginLeft: "10px"}}
                 >
                     <option value="">Select Category</option>
                     {categories.map((category) => (
@@ -108,10 +120,21 @@ class SearchPage extends Component<SearchPageProps> {
                         </option>
                     ))}
                 </select>
+                <select value={selectedUser}
+                        onChange={this.handleUser}
+                >
+                    {
+                        this.userStore.users.map((user: any) => {
+                            return (
+                                <option key={user.id} value={user.id}>{user.firstName}</option>
+                            )
+                        })
+                    }
+                </select>
                 <button onClick={() => {
                     c.goTo("cart")
-                }} style={{marginBottom: "20px"}}>
-                    {this.username}'s cart : ({totalItemsInCart})
+                }} style={{padding: "8px", width: "15%", marginBottom: "20px", marginLeft: "10px"}}>
+
                 </button>
                 <div>
                     {this.apiStore.loading ? (
@@ -120,27 +143,7 @@ class SearchPage extends Component<SearchPageProps> {
                         <div>Error: {this.apiStore.error.message}</div>
                     ) : (
                         this.apiStore.newData.map((product) => (
-                            <div key={product.id} style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
-                                <div style={{ width: "20%" }}>
-                                    <img src={product.thumbnail} alt={product.title} style={{ width: "100px" }} />
-                                </div>
-                                <div style={{ width: "60%" }}>
-                                    <h3>{product.title}</h3>
-                                    <p><strong>Description:</strong> {product.description}</p>
-                                    <p><strong>Price:</strong> ${product.price}</p>
-                                </div>
-                                <div style={{ width: "20%", textAlign: "right" }}>
-                                    {this.apiStore.cart.some(item => item.id === product.id) ? (
-                                        <div style={{ display: "flex", alignItems: "center" }}>
-                                            <button onClick={() => this.apiStore.updateCartQuantity(product.id, -1)}>-</button>
-                                            <span>{this.apiStore.cart.find(item => item.id === product.id)?.quantity}</span>
-                                            <button onClick={() => this.apiStore.updateCartQuantity(product.id, 1)}>+</button>
-                                        </div>
-                                    ) : (
-                                        <button onClick={() => this.apiStore.addToCart(product)}>Add to Cart</button>
-                                    )}
-                                </div>
-                            </div>
+                            <ProductView product={product}/>
                         ))
                     )}
                 </div>
@@ -149,7 +152,7 @@ class SearchPage extends Component<SearchPageProps> {
     }
 
     render() {
-        return  this.renderSearchPage();
+        return this.renderSearchPage();
     }
 }
 
