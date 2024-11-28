@@ -14,6 +14,7 @@ class SearchPage extends Component<SearchPageProps> {
         super(props);
         this.handleUserChange = this.handleUserChange.bind(this);
     }
+
     apiStore = ApiStore;
     userStore = UserStore;
     searchQuery: string = "";
@@ -37,6 +38,7 @@ class SearchPage extends Component<SearchPageProps> {
             return num;
     }
     async componentDidMount() {
+        await this.apiStore.setParticularCart(this.apiStore.selectedUser);
         await this.fetchProducts();
         await this.fetchCategories();
         this.userStore = UserStore
@@ -54,9 +56,12 @@ class SearchPage extends Component<SearchPageProps> {
         }
     };
 
-    setSearchQuery = (query: string) => {
+    setSearchQuery = async (query: string) => {
         this.searchQuery = query;
-        this.filterProductsByText(query);
+        if(this.selectedCategory)
+            this.filterProductsByText(query);
+        else await this.fetchProducts()
+
     };
 
     setSelectedCategory = async(category: string) => {
@@ -73,12 +78,13 @@ class SearchPage extends Component<SearchPageProps> {
         if (this.selectedCategory) {
             url = `https://dummyjson.com/products/category/${this.selectedCategory}`;
         }
+        else url = `https://dummyjson.com/products/search?q=${this.searchQuery}`
         await this.apiStore.fetchData(url);
     };
 
     filterProductsByText = (query: string) => {
         const filteredData:any = this.apiStore.data.filter((product) =>
-                (product.title.toLowerCase().includes(query.toLowerCase()) ||
+                 (product.title.toLowerCase().includes(query.toLowerCase()) ||
                     product.description.toLowerCase().includes(query.toLowerCase()))
         );
         this.apiStore.setNewData(filteredData);
@@ -90,12 +96,12 @@ class SearchPage extends Component<SearchPageProps> {
         // .goTo('/cart');  // deprecated as it cant be used in class based its a hook
     };
 
-    handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        this.setSearchQuery(event.target.value);
+    handleSearchChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        await this.setSearchQuery(event.target.value);
     };
 
-    handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        this.setSelectedCategory(event.target.value);
+    handleCategoryChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+        await this.setSelectedCategory(event.target.value);
     };
 
     renderSearchPage() {
@@ -150,7 +156,7 @@ class SearchPage extends Component<SearchPageProps> {
                         <div>Error: {this.apiStore.error.message}</div>
                     ) : (
                         this.apiStore.newData.map((product) => (
-                            <ProductView product={product}/>
+                            <ProductView key={product.id} product={product}/>
                         ))
                     )}
                 </div>

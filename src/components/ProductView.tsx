@@ -16,7 +16,7 @@ class productView extends Component<PropType>{
     apiStore = ApiStore
     constructor(props:any) {
         super(props);
-        this.product = this.props.product;
+        this.product = this.props.product
         this.apiStore = ApiStore;
     }
     check (id:string){
@@ -26,7 +26,10 @@ class productView extends Component<PropType>{
                 return true
             }
         return false
+    }componentDidUpdate() {
+        this.product = this.props.product
     }
+
     checkQuantity(id:string){
         const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.apiStore.cartMap.get(this.apiStore.userid) || [];
         for(let i = 0 ; i < existsingCartItems?.length ; i++)
@@ -36,6 +39,7 @@ class productView extends Component<PropType>{
         return 0
     }
     render() {
+        this.product = this.props.product
         return <>
             <div key={this.product.id} style={{display: "flex", alignItems: "center", marginBottom: "20px"}}>
                 <div style={{width: "20%"}}>

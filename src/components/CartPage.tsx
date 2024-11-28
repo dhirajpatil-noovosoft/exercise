@@ -1,29 +1,15 @@
 import React, { Component } from "react";
+
 import { observer } from "mobx-react";
 import ApiStore from "./ApiStore";
 
 @observer
 class CartPage extends Component {
     apiStore = ApiStore;
-    data: any = [];
+
     constructor(props:any) {
         super(props);
         this.apiStore = ApiStore;
-        this.setData()
-        console.log("data", this.data)
-    }
-    setData(){
-        const existingItems:Array<{
-            id: number;
-            title: string;
-            price: number;
-            thumbnail: string;
-            quantity: number
-        }> = this.apiStore.cartMap.get(this.apiStore.userid) || []
-        for(let i = 0 ; i < existingItems?.length ; i++)
-        {
-            this.data.push(existingItems[i])
-        }
     }
     // Calculate the total number of items in the cart
     getTotalItemsInCart = () => {
@@ -36,7 +22,6 @@ class CartPage extends Component {
 
     render() {
         const totalItems = this.getTotalItemsInCart(); // Get total items count
-
         return (
 
             <div>
@@ -44,8 +29,8 @@ class CartPage extends Component {
                     <h1 >{this.apiStore.userName}'s cart</h1>
                     <h3 >Total Items: {totalItems}</h3>
                 </div>
-                    <div>
-                        {this.data?.map((item:any) => (
+                {(this.apiStore.cartMap.get(this.apiStore.userid)?.length ) &&   <div>
+                        { this.apiStore.cartMap.get(this.apiStore.userid)?.map((item:any) => (
                             <div key={item.id} style={{display: "flex", alignItems: "center", marginBottom: "20px"}}>
                                 <img src={item.thumbnail} alt={item.title} style={{width: "100px"}}/>
                                 <div style={{flex: 1}}>
@@ -61,8 +46,7 @@ class CartPage extends Component {
                             </div>
                         ))}
 
-                    </div>
-
+                    </div>}
             </div>
         );
     }

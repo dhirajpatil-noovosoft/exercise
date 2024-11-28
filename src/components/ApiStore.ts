@@ -2,6 +2,7 @@ import {makeObservable, observable, action} from "mobx";
 import GetCart from "./GetCart";
 import UserStore from "./UserStore";
 import userStore from "./UserStore";
+import updateCart from "./updateCart";
 class ApiStores {
     error: any = null;
     data: { id: number; title: string; price: number; thumbnail: string; description:string }[] = [];
@@ -83,8 +84,9 @@ class ApiStores {
     setError(error: any) {
         this.error = error;
     }
-    setCartMap(uid:string, cartData:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }>){
+    async setCartMap(uid:string, cartData:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }>){
         this.cartMap.set(uid, cartData)
+        await updateCart(Number(this.userid), cartData)
     }
     async setParticularCart(uid:string){
         if(this.cartMap.has(uid))
@@ -133,7 +135,6 @@ class ApiStores {
         for(let i = 0 ; i < existsingCartItems?.length ; i++) {
             if (existsingCartItems[i].id === productId) {
                 existsingCartItems[i].quantity += change
-
             }
             if(existsingCartItems[i].quantity !== 0)
                 newItemCart.push(existsingCartItems[i])
