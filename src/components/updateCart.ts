@@ -2,10 +2,12 @@
     const newProductCart = []
     for(let i = 0 ; i < product.length ; i++)
         {
-            const item = product[i]
-            let newItem:any = {}
-            newItem["id"] = item["id"];
-            newItem["quantity"] = item["quantity"]
+            let newItem:{id:number, quantity:number} = {
+                id: 0,
+                quantity: 0
+            }
+            newItem["id"] = product[i]["id"];
+            newItem["quantity"] = product[i]["quantity"]
             newProductCart.push(newItem)
         }
 
