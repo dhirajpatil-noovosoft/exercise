@@ -1,6 +1,6 @@
 import {makeObservable, observable, action} from "mobx";
 class userStore{
-    users:any[] = []
+    users:Array< {id:string, firstName:string}> = []
     constructor() {
         makeObservable(this, {
             users:observable,
@@ -13,9 +13,8 @@ class userStore{
         let res = await response.json()
         this.setUsers(res.users)
     }
-    setUsers(userData:any){
+    setUsers(userData:Array< {id:string, firstName:string}>){
         this.users=userData
-        console.log(this.users[0].id)
     }
 }
 const UserStore = new userStore();

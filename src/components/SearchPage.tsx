@@ -30,14 +30,12 @@ class SearchPage extends Component<SearchPageProps> {
         await this.apiStore.getUser()
     }
     getTotalItemsInCart = () => {
-        {
             let num : number = 0
             const items = this.apiStore.cartMap.get(this.apiStore.userid) || []
             for(let i = 0 ; i < items.length ; i++)
                 num += items[i].quantity
             return num;
-        }
-    };
+    }
     async componentDidMount() {
         await this.fetchProducts();
         await this.fetchCategories();
@@ -79,11 +77,10 @@ class SearchPage extends Component<SearchPageProps> {
     };
 
     filterProductsByText = (query: string) => {
-        const filteredData = this.apiStore.data.filter((product) =>
-            product.title.toLowerCase().includes(query.toLowerCase()) ||
-            product.description.toLowerCase().includes(query.toLowerCase())
+        const filteredData:any = this.apiStore.data.filter((product) =>
+                (product.title.toLowerCase().includes(query.toLowerCase()) ||
+                    product.description.toLowerCase().includes(query.toLowerCase()))
         );
-        console.log(filteredData)
         this.apiStore.setNewData(filteredData);
     };
 
@@ -102,7 +99,7 @@ class SearchPage extends Component<SearchPageProps> {
     };
 
     renderSearchPage() {
-        const { searchQuery, selectedCategory, categories, selectedUser } = this;
+        const { searchQuery, selectedCategory, categories } = this;
         const totalItemsInCart : number = this.getTotalItemsInCart()
 
         const c: any = this.context;
@@ -113,7 +110,7 @@ class SearchPage extends Component<SearchPageProps> {
                     value={searchQuery}
                     onChange={this.handleSearchChange}
                     placeholder="Search for products"
-                    style={{padding: "8px", width: "60%", marginBottom: "20px"}}
+                    style={{padding: "8px", width: "50%", marginBottom: "20px"}}
                 />
 
                 <select
@@ -128,11 +125,11 @@ class SearchPage extends Component<SearchPageProps> {
                         </option>
                     ))}
                 </select>
-                <select value={selectedUser}
+                <select value={this.apiStore.selectedUser}
                         onChange={this.handleUserChange}
                 >
                     {
-                        this.userStore.users.map((user: any) => {
+                        this.userStore.users.map((user: {id:string, firstName:string}) => {
                             return (
                                 <option key={user.id} value={user.id}>{user.firstName}</option>
                             )

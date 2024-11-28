@@ -19,19 +19,18 @@ class productView extends Component<PropType>{
         this.product = this.props.product;
         this.apiStore = ApiStore;
     }
-    check (id:any){
-        const existsingCartItems:any = this.apiStore.cartMap.get(this.apiStore.userid);
+    check (id:string){
+        const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.apiStore.cartMap.get(this.apiStore.userid) || [];
         for(let i = 0 ; i < existsingCartItems?.length ; i++)
-            if(existsingCartItems[i].id === id) {
-                console.log("found")
+            if(existsingCartItems[i].id === Number(id)) {
                 return true
             }
         return false
     }
-    checkQuantity(id:any){
-        const existsingCartItems:any = this.apiStore.cartMap.get(this.apiStore.userid);
+    checkQuantity(id:string){
+        const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.apiStore.cartMap.get(this.apiStore.userid) || [];
         for(let i = 0 ; i < existsingCartItems?.length ; i++)
-            if(existsingCartItems[i].id === id) {
+            if(existsingCartItems[i].id === Number(id)) {
                 return existsingCartItems[i].quantity
             }
         return 0
@@ -39,7 +38,6 @@ class productView extends Component<PropType>{
     render() {
         return <>
             <div key={this.product.id} style={{display: "flex", alignItems: "center", marginBottom: "20px"}}>
-                <>{this.apiStore.userid}</>
                 <div style={{width: "20%"}}>
                     <img src={this.product.thumbnail} alt={this.product.title} style={{width: "100px"}}/>
                 </div>

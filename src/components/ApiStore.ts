@@ -1,49 +1,45 @@
 import {makeObservable, observable, action} from "mobx";
 import GetCart from "./GetCart";
 import UserStore from "./UserStore";
+import userStore from "./UserStore";
 class ApiStores {
-    data: any[] = [];
-    newData: any[] = [];
-    loading: boolean = false;
     error: any = null;
-    cartMap: Map<string, Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }>> = new Map();
-    cart: { id: number; title: string; price: number; thumbnail: string; quantity: number }[][] = [];
+    data: { id: number; title: string; price: number; thumbnail: string; description:string }[] = [];
+    newData: { id: number; title: string; price: number; thumbnail: string; description:string }[] = [];
+    loading: boolean = false;
     userid : string  = "1";
     userName:string = '';
-    userStore = UserStore;
+    userStore:typeof userStore = UserStore;
     selectedUser:string = "1"
+    cartMap: Map<string, Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }>> = new Map();
+
     constructor() {
         makeObservable(this, {
             data: observable,
             newData: observable,
             loading: observable,
             error: observable,
-            cart: observable,
             setData: action,
             setNewData: action,
             setLoading: action,
             setError: action,
-            addToCart: action,
-            removeFromCart: action,
-            updateCartQuantity: action,
-            updateCart:action,
-            setCart:action,
-            clearCart: action,
             userid:observable,
+            getUser:action,
+            userName:observable,
             setUserId:action,
             selectedUser:observable,
             setSelectedUser:action,
             cartMap:observable,
             setCartMap:action,
-            getUser:action,
-            userName:observable
+            addToCart: action,
+            removeFromCart: action,
+            updateCartQuantity: action,
+            setUserName:action
         });
         this.userStore = UserStore;
         this.cartMap = new Map();
     }
-    setCartMap(uid:string, cartData:any){
-        this.cartMap.set(uid, cartData)
-    }
+
     setSelectedUser = async(User: string) => {
         this.selectedUser = User;
         this.setUserId(this.selectedUser)
@@ -52,6 +48,20 @@ class ApiStores {
 
     setUserId(id:string){
         this.userid = id
+    }
+    // Set the data to the store
+    setData(data: { id: number; title: string; price: number; thumbnail: string; description:string }[]) {
+        this.data = data;
+    }
+
+    // Set the new filtered data
+    setNewData(newData: { id: number; title: string; price: number; thumbnail: string; description:string }[]) {
+        this.newData = newData;
+    }
+
+    // Set loading state
+    setLoading(loading: boolean) {
+        this.loading = loading;
     }
     // Fetch data from the API
     async fetchData(url: string) {
@@ -69,8 +79,14 @@ class ApiStores {
             this.setLoading(false);
         }
     }
+    // Set error state
+    setError(error: any) {
+        this.error = error;
+    }
+    setCartMap(uid:string, cartData:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }>){
+        this.cartMap.set(uid, cartData)
+    }
     async setParticularCart(uid:string){
-        let currCartId = await GetCart(uid)
         if(this.cartMap.has(uid))
             return
         else {
@@ -78,37 +94,14 @@ class ApiStores {
             this.setCartMap(uid, currCartId)
         }
     }
-    // Set the data to the store
-    setData(data: any[]) {
-        this.data = data;
-    }
-    setCart(id:any, data:any[]){
-        this.cart[id] = data
-    }
-
-    // Set the new filtered data
-    setNewData(newData: any[]) {
-        this.newData = newData;
-    }
-
-    // Set loading state
-    setLoading(loading: boolean) {
-        this.loading = loading;
-    }
-
-    // Set error state
-    setError(error: any) {
-        this.error = error;
-    }
     // Add product to cart
     addToCart(product: { id: number; title: string; price: number; thumbnail: string }) {
         if(!this.cartMap.has(this.userid)){
             this.setCartMap(this.userid, [])
         }
         let existingProduct:number = -1
-        let array:any = []
-        // @ts-ignore
-        let existingCartItems:[{id:number, quantity:number}] = this.cartMap.get(this.userid)
+        let array:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = []
+        let existingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.cartMap.get(this.userid) || []
         for(let i = 0 ; i < existingCartItems?.length ; i++)
         {
             if(existingCartItems[i].id === product.id){
@@ -125,35 +118,18 @@ class ApiStores {
 
     // Remove product from cart
     async removeFromCart(productId: number) {
-        let newCartItems = []
-        const existingCartItems:any = this.cartMap.get(this.userid)
+        let newCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = []
+        const existingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.cartMap.get(this.userid) || []
         for(let i = 0 ; i < existingCartItems?.length ; i++)
             if(existingCartItems[i].id !== productId)
                 newCartItems.push(existingCartItems[i])
         this.setCartMap(this.userid, newCartItems )
     }
-    // to update cart via api
-    updateCart = async (id:string, product:any[])=>{
-        let response = await fetch('https://dummyjson.com/carts/add', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: this.userid,
-                products: product
-            })
-        })
-        response = await response.json()
-        return response
-    }
-    async getUser(){
-        const response = await fetch(`https://dummyjson.com/users/${this.userid}`)
-        const res = await response.json()
-        this.userName = res.firstName
-    }
+
     // Update product quantity in cart
     updateCartQuantity(productId: number, change: number) {
-        const existsingCartItems:any = this.cartMap.get(this.userid) || [];
-        let newItemCart:any = []
+        const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.cartMap.get(this.userid) || [];
+        let newItemCart:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = []
         for(let i = 0 ; i < existsingCartItems?.length ; i++) {
             if (existsingCartItems[i].id === productId) {
                 existsingCartItems[i].quantity += change
@@ -164,13 +140,16 @@ class ApiStores {
         }
         this.setCartMap(this.userid, newItemCart)
     }
-
-    // Clear all items from the cart
-    clearCart() {
-        this.cart = [];
+    setUserName(name:string)
+    {
+        this.userName = name
+    }
+    async getUser(){
+        const response = await fetch(`https://dummyjson.com/users/${this.userid}`)
+        const res = await response.json()
+        this.setUserName(res.firstName)
     }
 }
-
 const ApiStore = new ApiStores();
 export default ApiStore;
 // fine

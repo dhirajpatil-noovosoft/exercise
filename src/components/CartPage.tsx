@@ -19,7 +19,7 @@ class CartPage extends Component {
             price: number;
             thumbnail: string;
             quantity: number
-        }> | any= this.apiStore.cartMap.get(this.apiStore.userid)
+        }> = this.apiStore.cartMap.get(this.apiStore.userid) || []
         for(let i = 0 ; i < existingItems?.length ; i++)
         {
             this.data.push(existingItems[i])
@@ -27,14 +27,12 @@ class CartPage extends Component {
     }
     // Calculate the total number of items in the cart
     getTotalItemsInCart = () => {
-        {
             let num : number = 0
             const items = this.apiStore.cartMap.get(this.apiStore.userid) || []
             for(let i = 0 ; i < items.length ; i++)
                 num += items[i].quantity
             return num;
-        }
-    };
+    }
 
     render() {
         const totalItems = this.getTotalItemsInCart(); // Get total items count
