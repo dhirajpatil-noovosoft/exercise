@@ -37,9 +37,10 @@ class CartPage extends Component {
                                     <h3>{item.title}</h3>
                                     <p><strong>Price:</strong> ${item.price}</p>
                                     <p><strong>Quantity:</strong> {item.quantity}</p>
+                                    <p><strong>Category:</strong> {item.category}</p>
                                 </div>
                                 <div>
-                                    <button onClick={() => this.apiStore.updateCartQuantity(item.id, -1)}>-</button>
+                                <button onClick={() => this.apiStore.updateCartQuantity(item.id, -1)}>-</button>
                                     <button onClick={() => this.apiStore.removeFromCart(item.id)}>Remove</button>
                                     <button onClick={() => this.apiStore.updateCartQuantity(item.id, 1)}>+</button>
                                 </div>
