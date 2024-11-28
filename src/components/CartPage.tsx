@@ -5,9 +5,20 @@ import ApiStore from "./ApiStore";
 @observer
 class CartPage extends Component {
     apiStore = ApiStore;
+    data: any = [];
     constructor(props:any) {
         super(props);
-        this.apiStore = ApiStore
+        this.apiStore = ApiStore;
+        this.setData()
+        console.log("data", this.data)
+    }
+    setData(){
+        const existingItems= this.apiStore.cartMap.get(this.apiStore.userid)
+        existingItems?.map((item)=>
+        {
+            this.data.push(item)
+            return 0;
+        })
     }
     // Calculate the total number of items in the cart
     getTotalItemsInCart = () => {
@@ -18,17 +29,25 @@ class CartPage extends Component {
 
     render() {
         const totalItems = this.getTotalItemsInCart(); // Get total items count
+        {
+            console.log("rendering")
+            const items = this.apiStore.cartMap.get(this.apiStore.userid)
+            items?.map((item) =>
+            {
+                console.log("item : ", item)
+                return 0
+
+            })
+        }
         return (
+
             <div>
                 <div style={{display:"flex"}}>
                     <h1 >{this.apiStore.userid}'s cart</h1>
                     <h3 >Total Items: {totalItems}</h3>
                 </div>
-                {totalItems === 0 ? (
-                    <p>Your cart is empty</p>
-                ) : (
                     <div>
-                        {this.apiStore.cart[Number(this.apiStore.userid)]?.map((item) => (
+                        {this.data?.map((item:any) => (
                             <div key={item.id} style={{display: "flex", alignItems: "center", marginBottom: "20px"}}>
                                 <img src={item.thumbnail} alt={item.title} style={{width: "100px"}}/>
                                 <div style={{flex: 1}}>
@@ -45,7 +64,7 @@ class CartPage extends Component {
                         ))}
 
                     </div>
-                )}
+
             </div>
         );
     }

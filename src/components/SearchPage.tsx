@@ -12,7 +12,7 @@ interface SearchPageProps {
 class SearchPage extends Component<SearchPageProps> {
     constructor(props:any) {
         super(props);
-        this.handleUser = this.handleUser.bind(this);
+        this.handleUserChange = this.handleUserChange.bind(this);
     }
     apiStore = ApiStore;
     userStore = UserStore;
@@ -22,13 +22,11 @@ class SearchPage extends Component<SearchPageProps> {
     categories: { slug: string; name: string; url: string }[] = [];
     static contextType = RouterContext;
     // user related things
-    handleUser(event:React.ChangeEvent<HTMLSelectElement>){
+    async handleUserChange(event:React.ChangeEvent<HTMLSelectElement>){
         let userIDNew = event.target.value
-        this.apiStore.setParticularCart(event.target.value)
-        console.log("cart is ",  this.apiStore.cart[Number(userIDNew)])
+        await this.apiStore.setParticularCart(event.target.value)
         this.selectedUser = userIDNew
-        this.apiStore.setSelectedUser(userIDNew)
-        console.log("new user is ", this.apiStore.selectedUser, userIDNew)
+        await this.apiStore.setSelectedUser(userIDNew)
     }
 
     async componentDidMount() {
@@ -94,7 +92,6 @@ class SearchPage extends Component<SearchPageProps> {
     };
 
     renderSearchPage() {
-        console.log("new render")
         const { searchQuery, selectedCategory, categories, selectedUser } = this;
         const totalItemsInCart : number = 0
         const c: any = this.context;
@@ -121,7 +118,7 @@ class SearchPage extends Component<SearchPageProps> {
                     ))}
                 </select>
                 <select value={selectedUser}
-                        onChange={this.handleUser}
+                        onChange={this.handleUserChange}
                 >
                     {
                         this.userStore.users.map((user: any) => {

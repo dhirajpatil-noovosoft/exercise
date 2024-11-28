@@ -6,6 +6,7 @@ class ApiStores {
     newData: any[] = [];
     loading: boolean = false;
     error: any = null;
+    cartMap: Map<string, Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }>> = new Map();
     cart: { id: number; title: string; price: number; thumbnail: string; quantity: number }[][] = [];
     userid : string  = "1";
     userName:string = '';
@@ -35,12 +36,13 @@ class ApiStores {
             setSelectedUser:action
         });
         this.userStore = UserStore;
+        this.cartMap = new Map();
     }
 
     setSelectedUser = async(User: string) => {
         this.selectedUser = User;
         this.setUserId(this.selectedUser)
-        await this.setParticularCart(Number(User))
+        await this.setParticularCart(User)
     };
 
     setUserId(id:string){
@@ -49,8 +51,6 @@ class ApiStores {
     // Fetch data from the API
     async fetchData(url: string) {
         this.setLoading(true);
-
-
         try {
             const response = await fetch(url);
             const result = await response.json();
@@ -64,46 +64,16 @@ class ApiStores {
             this.setLoading(false);
         }
     }
-    async setParticularCart(uid:any){
+    async setParticularCart(uid:string){
         let currCartId = await GetCart(uid)
-        if(currCartId === -1) {
-            this.setCart(uid, [])
-        }
-        if(this.cart[uid] !== undefined)
+        if(this.cartMap.has(uid))
             return
-        else{
-            const cartResult = await fetch(`https://dummyjson.com/carts/${currCartId}`)
-            const jsonCart = await cartResult.json()
-            const jsonProducts = await jsonCart.products
-            const cartData = jsonProducts.map((item:any) =>
-            {
-                return {id:item["id"],title:item["title"], price:item["price"],thumbnail:item["thumbnail"], quantity:item["quantity"]};
-            })
-            this.setCart(uid, cartData);
+        else {
+            let currCartId = await GetCart(uid)
+            this.cartMap.set(uid, currCartId)
+            console.log(this.cartMap.get(uid))
         }
     }
-    // async setEachcart(){
-    //     await this.userStore.fetchUsers()
-    //     console.log("total users we have : ", this.userStore.users.length)
-    //     for(let i = 0 ; i < this.userStore.users.length ; i++){
-    //         console.log("setting for ", this.userStore.users[i]["id"])
-    //         let currCartId = await GetCart(this.userStore.users[i]["id"])
-    //         if(currCartId === -1) {
-    //             this.setCart(this.userStore.users[i]["id"], [])
-    //         }
-    //         else{
-    //             const cartResult = await fetch(`https://dummyjson.com/carts/${currCartId}`)
-    //             const jsonCart = await cartResult.json()
-    //             const jsonProducts = await jsonCart.products
-    //             const cartData = jsonProducts.map((item:any) =>
-    //             {
-    //                 return {id:item["id"],title:item["title"], price:item["price"],thumbnail:item["thumbnail"], quantity:item["quantity"]};
-    //             })
-    //             this.setCart(this.userStore.users[i]["id"], cartData);
-    //         }
-    //     }
-    // }
-
     // Set the data to the store
     setData(data: any[]) {
         this.data = data;
@@ -135,14 +105,28 @@ class ApiStores {
     }
     // Add product to cart
     addToCart(product: { id: number; title: string; price: number; thumbnail: string }) {
-        const existingProduct = this.cart[Number(this.userid)]?.find((item) => item.id === product.id);
-        if (existingProduct) {
-            existingProduct.quantity += 1; // Increment quantity if already in the cart
-        } else {
-            this.cart.push()
-            const newItem = [this.cart[Number(this.userid)], { ...product, quantity: 1 }]
-            this.setCart(Number(this.userid) , newItem)
+        if(!this.cartMap.has(this.userid)){
+            this.cartMap.set(this.userid, [])
         }
+        let existingProduct:number = -1
+        let array:any = []
+        // @ts-ignore
+        let existingCartItems:[{id:number, quantity:number}] = this.cartMap.get(this.userid)
+        console.log("existing : ", existingCartItems)
+        console.log("productID : ", product.id)
+        for(let i = 0 ; i < existingCartItems?.length ; i++)
+        {
+            if(existingCartItems[i].id === product.id){
+                existingCartItems[i].quantity += 1;
+                existingProduct = i
+            }
+            array.push(existingCartItems[i])
+        }
+        if (existingProduct === -1) {
+            array.push({...product, quantity:1})
+            this.cartMap.set(this.userid, array)
+        }
+        console.log(this.cartMap.get(this.userid))
     }
 
     // Remove product from cart
@@ -169,16 +153,13 @@ class ApiStores {
         this.userName = res.firstName
     }
     // Update product quantity in cart
-    async updateCartQuantity(productId: number, change: number) {
-        await this.updateWholeCart();
-        const product = this.cart[Number(this.userid)].find((item) => item.id === productId);
-        if (product) {
-            product.quantity += change;
-            if (product.quantity <= 0) {
-                await this.removeFromCart(productId); // Remove product if quantity is 0
+    updateCartQuantity(productId: number, change: number) {
+        const existsingCartItems:any = this.cartMap.get(this.userid);
+        for(let i = 0 ; i < existsingCartItems?.length ; i++)
+            if(existsingCartItems[i].id === productId) {
+                existsingCartItems[i].quantity += change
             }
-        }
-        await this.updateWholeCart();
+        this.cartMap.set(this.userid, existsingCartItems)
     }
 
     // Clear all items from the cart

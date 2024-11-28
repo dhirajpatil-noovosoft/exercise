@@ -19,6 +19,23 @@ class productView extends Component<PropType>{
         this.product = this.props.product;
         this.apiStore = ApiStore;
     }
+    check (id:any){
+        const existsingCartItems:any = this.apiStore.cartMap.get(this.apiStore.userid);
+        for(let i = 0 ; i < existsingCartItems?.length ; i++)
+            if(existsingCartItems[i].id === id) {
+                console.log("found")
+                return true
+            }
+        return false
+    }
+    checkQuantity(id:any){
+        const existsingCartItems:any = this.apiStore.cartMap.get(this.apiStore.userid);
+        for(let i = 0 ; i < existsingCartItems?.length ; i++)
+            if(existsingCartItems[i].id === id) {
+                return existsingCartItems[i].quantity
+            }
+        return 0
+    }
     render() {
         return <>
             <div key={this.product.id} style={{display: "flex", alignItems: "center", marginBottom: "20px"}}>
@@ -33,11 +50,11 @@ class productView extends Component<PropType>{
                     <p><strong>Price:</strong> ${this.product.price}</p>
                 </div>
                 <div style={{width: "20%", textAlign: "right"}}>
-                    {this.apiStore.cart[Number(this.apiStore.userid)]?.some(item => item.id === this.product.id) ? (
+                    {this.check(this.product.id) ? (
                         <div style={{display: "flex", alignItems: "center"}}>
-                            <button onClick={() => this.apiStore.updateCartQuantity(this.product.id, -1)}>-</button>
-                            <span>{this.apiStore.cart[Number(this.apiStore.userid)].find(item => item.id === this.product.id)?.quantity}</span>
-                            <button onClick={() => this.apiStore.updateCartQuantity(this.product.id, 1)}>+</button>
+                            <button onClick={ () => this.apiStore.updateCartQuantity(this.product.id, -1)}>-</button>
+                            <span>{this.checkQuantity(this.product.id)}</span>
+                            <button onClick={ () => this.apiStore.updateCartQuantity(this.product.id, 1)}>+</button>
                         </div>
                     ) : (
                         <button onClick={() => this.apiStore.addToCart(this.product)}>Add to Cart</button>
