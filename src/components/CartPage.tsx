@@ -13,37 +13,37 @@ class CartPage extends Component {
         console.log("data", this.data)
     }
     setData(){
-        const existingItems= this.apiStore.cartMap.get(this.apiStore.userid)
-        existingItems?.map((item)=>
+        const existingItems:Array<{
+            id: number;
+            title: string;
+            price: number;
+            thumbnail: string;
+            quantity: number
+        }> | any= this.apiStore.cartMap.get(this.apiStore.userid)
+        for(let i = 0 ; i < existingItems?.length ; i++)
         {
-            this.data.push(item)
-            return 0;
-        })
+            this.data.push(existingItems[i])
+        }
     }
     // Calculate the total number of items in the cart
     getTotalItemsInCart = () => {
-        if(this.apiStore.cart[Number(this.apiStore.userid)] === undefined)
-            return 0
-        return this.apiStore.cart[Number(this.apiStore.userid)]?.reduce((acc, item) => acc + item.quantity, 0);
+        {
+            let num : number = 0
+            const items = this.apiStore.cartMap.get(this.apiStore.userid) || []
+            for(let i = 0 ; i < items.length ; i++)
+                num += items[i].quantity
+            return num;
+        }
     };
 
     render() {
         const totalItems = this.getTotalItemsInCart(); // Get total items count
-        {
-            console.log("rendering")
-            const items = this.apiStore.cartMap.get(this.apiStore.userid)
-            items?.map((item) =>
-            {
-                console.log("item : ", item)
-                return 0
 
-            })
-        }
         return (
 
             <div>
                 <div style={{display:"flex"}}>
-                    <h1 >{this.apiStore.userid}'s cart</h1>
+                    <h1 >{this.apiStore.userName}'s cart</h1>
                     <h3 >Total Items: {totalItems}</h3>
                 </div>
                     <div>

@@ -27,18 +27,23 @@ class ApiStores {
             removeFromCart: action,
             updateCartQuantity: action,
             updateCart:action,
-            updateWholeCart:action,
             setCart:action,
             clearCart: action,
             userid:observable,
             setUserId:action,
             selectedUser:observable,
-            setSelectedUser:action
+            setSelectedUser:action,
+            cartMap:observable,
+            setCartMap:action,
+            getUser:action,
+            userName:observable
         });
         this.userStore = UserStore;
         this.cartMap = new Map();
     }
-
+    setCartMap(uid:string, cartData:any){
+        this.cartMap.set(uid, cartData)
+    }
     setSelectedUser = async(User: string) => {
         this.selectedUser = User;
         this.setUserId(this.selectedUser)
@@ -70,8 +75,7 @@ class ApiStores {
             return
         else {
             let currCartId = await GetCart(uid)
-            this.cartMap.set(uid, currCartId)
-            console.log(this.cartMap.get(uid))
+            this.setCartMap(uid, currCartId)
         }
     }
     // Set the data to the store
@@ -96,24 +100,15 @@ class ApiStores {
     setError(error: any) {
         this.error = error;
     }
-    async updateWholeCart(){
-        const products = []
-        for(let i = 0 ; i < this.cart[Number(this.userid)].length ; i++)
-            products.push({id :this.cart[Number(this.userid)][i].id,quantity:this.cart[Number(this.userid)][i].quantity })
-        const result: any = await this.updateCart(this.userid, products)
-        this.setCart(Number(this.userid) ,result.products || result)
-    }
     // Add product to cart
     addToCart(product: { id: number; title: string; price: number; thumbnail: string }) {
         if(!this.cartMap.has(this.userid)){
-            this.cartMap.set(this.userid, [])
+            this.setCartMap(this.userid, [])
         }
         let existingProduct:number = -1
         let array:any = []
         // @ts-ignore
         let existingCartItems:[{id:number, quantity:number}] = this.cartMap.get(this.userid)
-        console.log("existing : ", existingCartItems)
-        console.log("productID : ", product.id)
         for(let i = 0 ; i < existingCartItems?.length ; i++)
         {
             if(existingCartItems[i].id === product.id){
@@ -123,16 +118,19 @@ class ApiStores {
             array.push(existingCartItems[i])
         }
         if (existingProduct === -1) {
-            array.push({...product, quantity:1})
-            this.cartMap.set(this.userid, array)
+            array.push({...product, quantity:1});
         }
-        console.log(this.cartMap.get(this.userid))
+        this.setCartMap(this.userid, array)
     }
 
     // Remove product from cart
     async removeFromCart(productId: number) {
-        this.cart[Number(this.userid)] = this.cart[Number(this.userid)].filter((item) => item.id !== productId);
-        await this.updateWholeCart();
+        let newCartItems = []
+        const existingCartItems:any = this.cartMap.get(this.userid)
+        for(let i = 0 ; i < existingCartItems?.length ; i++)
+            if(existingCartItems[i].id !== productId)
+                newCartItems.push(existingCartItems[i])
+        this.setCartMap(this.userid, newCartItems )
     }
     // to update cart via api
     updateCart = async (id:string, product:any[])=>{
@@ -154,12 +152,17 @@ class ApiStores {
     }
     // Update product quantity in cart
     updateCartQuantity(productId: number, change: number) {
-        const existsingCartItems:any = this.cartMap.get(this.userid);
-        for(let i = 0 ; i < existsingCartItems?.length ; i++)
-            if(existsingCartItems[i].id === productId) {
+        const existsingCartItems:any = this.cartMap.get(this.userid) || [];
+        let newItemCart:any = []
+        for(let i = 0 ; i < existsingCartItems?.length ; i++) {
+            if (existsingCartItems[i].id === productId) {
                 existsingCartItems[i].quantity += change
+
             }
-        this.cartMap.set(this.userid, existsingCartItems)
+            if(existsingCartItems[i].quantity !== 0)
+                newItemCart.push(existsingCartItems[i])
+        }
+        this.setCartMap(this.userid, newItemCart)
     }
 
     // Clear all items from the cart

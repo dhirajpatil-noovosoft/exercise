@@ -27,14 +27,24 @@ class SearchPage extends Component<SearchPageProps> {
         await this.apiStore.setParticularCart(event.target.value)
         this.selectedUser = userIDNew
         await this.apiStore.setSelectedUser(userIDNew)
+        await this.apiStore.getUser()
     }
-
+    getTotalItemsInCart = () => {
+        {
+            let num : number = 0
+            const items = this.apiStore.cartMap.get(this.apiStore.userid) || []
+            for(let i = 0 ; i < items.length ; i++)
+                num += items[i].quantity
+            return num;
+        }
+    };
     async componentDidMount() {
         await this.fetchProducts();
         await this.fetchCategories();
         this.userStore = UserStore
         await this.userStore.fetchUsers()
         await this.apiStore.setSelectedUser(this.selectedUser)
+        await this.apiStore.getUser();
     }
 
     fetchCategories = async () => {
@@ -93,7 +103,8 @@ class SearchPage extends Component<SearchPageProps> {
 
     renderSearchPage() {
         const { searchQuery, selectedCategory, categories, selectedUser } = this;
-        const totalItemsInCart : number = 0
+        const totalItemsInCart : number = this.getTotalItemsInCart()
+
         const c: any = this.context;
         return (
             <div>
@@ -131,7 +142,9 @@ class SearchPage extends Component<SearchPageProps> {
                 <button onClick={() => {
                     c.goTo("cart")
                 }} style={{padding: "8px", width: "15%", marginBottom: "20px", marginLeft: "10px"}}>
-
+                    {this.apiStore.userName}'s cart
+                    <br/>
+                    {totalItemsInCart}
                 </button>
                 <div>
                     {this.apiStore.loading ? (
