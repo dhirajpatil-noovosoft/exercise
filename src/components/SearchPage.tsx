@@ -78,7 +78,8 @@ class SearchPage extends Component<SearchPageProps> {
         if (this.selectedCategory) {
             url = `https://dummyjson.com/products/category/${this.selectedCategory}`;
         }
-        else url = `https://dummyjson.com/products/search?q=${this.searchQuery}`
+        else if(this.searchQuery)
+            url = `https://dummyjson.com/products/search?q=${this.searchQuery}`
         await this.apiStore.fetchData(url);
     };
 
