@@ -5,14 +5,14 @@ import userStore from "./UserStore";
 import updateCart from "./updateCart";
 class ApiStores {
     error: any = null;
-    data: { id: number; title: string; price: number; thumbnail: string; description:string }[] = [];
-    newData: { id: number; title: string; price: number; thumbnail: string; description:string }[] = [];
+    data: { id: number; title: string; price: number; thumbnail: string; description:string; category:string }[] = [];
+    newData: { id: number; title: string; price: number; thumbnail: string; description:string; category:string }[] = [];
     loading: boolean = false;
     userid : string  = "1";
     userName:string = '';
     userStore:typeof userStore = UserStore;
     selectedUser:string = "1"
-    cartMap: Map<string, Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }>> = new Map();
+    cartMap: Map<string, Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }>> = new Map();
 
     constructor() {
         makeObservable(this, {
@@ -51,12 +51,12 @@ class ApiStores {
         this.userid = id
     }
     // Set the data to the store
-    setData(data: { id: number; title: string; price: number; thumbnail: string; description:string }[]) {
+    setData(data: { id: number; title: string; price: number; thumbnail: string; description:string; category:string }[]) {
         this.data = data;
     }
 
     // Set the new filtered data
-    setNewData(newData: { id: number; title: string; price: number; thumbnail: string; description:string }[]) {
+    setNewData(newData: { id: number; title: string; price: number; thumbnail: string; description:string ; category:string}[]) {
         this.newData = newData;
     }
 
@@ -84,7 +84,7 @@ class ApiStores {
     setError(error: any) {
         this.error = error;
     }
-    async setCartMap(uid:string, cartData:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }>){
+    async setCartMap(uid:string, cartData:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }>){
         this.cartMap.set(uid, cartData)
         await updateCart(Number(this.userid), cartData)
     }
@@ -97,13 +97,13 @@ class ApiStores {
         }
     }
     // Add product to cart
-    addToCart(product: { id: number; title: string; price: number; thumbnail: string }) {
+    addToCart(product: { id: number; title: string; price: number; thumbnail: string; category:string }) {
         if(!this.cartMap.has(this.userid)){
             this.setCartMap(this.userid, [])
         }
         let existingProduct:number = -1
-        let array:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = []
-        let existingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.cartMap.get(this.userid) || []
+        let array:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }> = []
+        let existingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }> = this.cartMap.get(this.userid) || []
         for(let i = 0 ; i < existingCartItems?.length ; i++)
         {
             if(existingCartItems[i].id === product.id){
@@ -120,18 +120,18 @@ class ApiStores {
 
     // Remove product from cart
     async removeFromCart(productId: number) {
-        let newCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = []
-        const existingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.cartMap.get(this.userid) || []
+        let newCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }> = []
+        const existingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }> = this.cartMap.get(this.userid) || []
         for(let i = 0 ; i < existingCartItems?.length ; i++)
             if(existingCartItems[i].id !== productId)
                 newCartItems.push(existingCartItems[i])
-        this.setCartMap(this.userid, newCartItems )
+        await this.setCartMap(this.userid, newCartItems )
     }
 
     // Update product quantity in cart
     async updateCartQuantity(productId: number, change: number) {
-        const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.cartMap.get(this.userid) || [];
-        let newItemCart:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = []
+        const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }> = this.cartMap.get(this.userid) || [];
+        let newItemCart:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }> = []
         for(let i = 0 ; i < existsingCartItems?.length ; i++) {
             if (existsingCartItems[i].id === productId) {
                 existsingCartItems[i].quantity += change

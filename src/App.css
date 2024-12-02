@@ -7,6 +7,26 @@
   pointer-events: none;
 }
 
+.cartButton {
+  padding: 8px;
+  width: 15%;
+  margin-bottom: 20px;
+  margin-left: 10px
+}
+
+.product{
+  width: 20%;
+  text-align: right
+}
+
+.addToCart{
+  background-color: green;
+}
+
+.removeFromCart{
+  background-color: red;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;

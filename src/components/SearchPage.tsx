@@ -25,7 +25,7 @@ class SearchPage extends Component<SearchPageProps> {
     // user related things
     async handleUserChange(event:React.ChangeEvent<HTMLSelectElement>){
         let userIDNew = event.target.value
-        await this.apiStore.setParticularCart(event.target.value)
+        await this.apiStore.setParticularCart(userIDNew)
         this.selectedUser = userIDNew
         await this.apiStore.setSelectedUser(userIDNew)
         await this.apiStore.getUser()
@@ -58,9 +58,7 @@ class SearchPage extends Component<SearchPageProps> {
 
     setSearchQuery = async (query: string) => {
         this.searchQuery = query;
-        if(this.selectedCategory)
-            this.filterProductsByText(query);
-        else await this.fetchProducts()
+        await this.fetchProducts()
 
     };
 
@@ -75,26 +73,29 @@ class SearchPage extends Component<SearchPageProps> {
 
     fetchProducts = async () => {
         let url = "https://dummyjson.com/products?limit=0";
-        if (this.selectedCategory) {
-            url = `https://dummyjson.com/products/category/${this.selectedCategory}`;
-        }
-        else if(this.searchQuery)
+        if(this.searchQuery && this.selectedCategory)
+        {
             url = `https://dummyjson.com/products/search?q=${this.searchQuery}`
-        await this.apiStore.fetchData(url);
+            await this.apiStore.fetchData(url);
+            this.filterProductsByCategory(this.selectedCategory)
+        }
+        else if (this.selectedCategory) {
+            url = `https://dummyjson.com/products/category/${this.selectedCategory}`;
+            await this.apiStore.fetchData(url);
+        }
+        else if(this.searchQuery) {
+            url = `https://dummyjson.com/products/search?q=${this.searchQuery}`
+            await this.apiStore.fetchData(url);
+        }
+        else
+            await this.apiStore.fetchData(url);
     };
 
-    filterProductsByText = (query: string) => {
+    filterProductsByCategory = (query: string) => {
         const filteredData:any = this.apiStore.data.filter((product) =>
-                 (product.title.toLowerCase().includes(query.toLowerCase()) ||
-                    product.description.toLowerCase().includes(query.toLowerCase()))
+            (product.category === (query.toLowerCase()))
         );
         this.apiStore.setNewData(filteredData);
-    };
-
-    toggleCartPage =  () => {
-        // this.showCart = !this.showCart; // Toggle the value between true and false
-        // this.forceUpdate(); // Forcing a re-render to make sure the UI updates immediately
-        // .goTo('/cart');  // deprecated as it cant be used in class based its a hook
     };
 
     handleSearchChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,9 +144,9 @@ class SearchPage extends Component<SearchPageProps> {
                         })
                     }
                 </select>
-                <button onClick={() => {
+                <button className="cartButton" onClick={() => {
                     c.goTo("cart")
-                }} style={{padding: "8px", width: "15%", marginBottom: "20px", marginLeft: "10px"}}>
+                }} >
                     {this.apiStore.userName}'s cart
                     <br/>
                     {totalItemsInCart}

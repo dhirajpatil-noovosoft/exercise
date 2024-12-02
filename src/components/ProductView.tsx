@@ -1,5 +1,6 @@
 import React, {Component} from "react";
 import ApiStore from "./ApiStore";
+import "../App.css"
 interface PropType {
     product: {
         id: number;
@@ -26,8 +27,6 @@ class productView extends Component<PropType>{
                 return true
             }
         return false
-    }componentDidUpdate() {
-        this.product = this.props.product
     }
 
     checkQuantity(id:string){
@@ -51,15 +50,15 @@ class productView extends Component<PropType>{
                     <p><strong>Description:</strong> {this.product.description}</p>
                     <p><strong>Price:</strong> ${this.product.price}</p>
                 </div>
-                <div style={{width: "20%", textAlign: "right"}}>
+                <div className="product">
                     {this.check(this.product.id) ? (
                         <div style={{display: "flex", alignItems: "center"}}>
-                            <button onClick={ () => this.apiStore.updateCartQuantity(this.product.id, -1)}>-</button>
+                            <button className="removeFromCart" onClick={ () => this.apiStore.updateCartQuantity(this.product.id, -1)}>-</button>
                             <span>{this.checkQuantity(this.product.id)}</span>
-                            <button onClick={ () => this.apiStore.updateCartQuantity(this.product.id, 1)}>+</button>
+                            <button className="addToCart" onClick={ () => this.apiStore.updateCartQuantity(this.product.id, 1)}>+</button>
                         </div>
                     ) : (
-                        <button onClick={() => this.apiStore.addToCart(this.product)}>Add to Cart</button>
+                        <button className="addToCart" onClick={() => this.apiStore.addToCart(this.product)}>Add to Cart</button>
                     )}
                 </div>
             </div>
