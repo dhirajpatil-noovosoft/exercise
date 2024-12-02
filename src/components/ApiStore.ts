@@ -129,7 +129,7 @@ class ApiStores {
     }
 
     // Update product quantity in cart
-    updateCartQuantity(productId: number, change: number) {
+    async updateCartQuantity(productId: number, change: number) {
         const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.cartMap.get(this.userid) || [];
         let newItemCart:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = []
         for(let i = 0 ; i < existsingCartItems?.length ; i++) {
@@ -139,7 +139,7 @@ class ApiStores {
             if(existsingCartItems[i].quantity !== 0)
                 newItemCart.push(existsingCartItems[i])
         }
-        this.setCartMap(this.userid, newItemCart)
+        await this.setCartMap(this.userid, newItemCart)
     }
     setUserName(name:string)
     {

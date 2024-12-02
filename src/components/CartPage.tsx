@@ -29,7 +29,7 @@ class CartPage extends Component {
                     <h1 >{this.apiStore.userName}'s cart</h1>
                     <h3 >Total Items: {totalItems}</h3>
                 </div>
-                {(this.apiStore.cartMap.get(this.apiStore.userid)?.length ) &&   <div>
+                {(this.apiStore.cartMap.get(this.apiStore.userid)?.length ) ?   <div>
                         { this.apiStore.cartMap.get(this.apiStore.userid)?.map((item:any) => (
                             <div key={item.id} style={{display: "flex", alignItems: "center", marginBottom: "20px"}}>
                                 <img src={item.thumbnail} alt={item.title} style={{width: "100px"}}/>
@@ -47,13 +47,10 @@ class CartPage extends Component {
                             </div>
                         ))}
 
-                    </div>}
+                    </div> : <></>}
             </div>
         );
     }
 }
 
 export {CartPage};
-
-
-// fine
