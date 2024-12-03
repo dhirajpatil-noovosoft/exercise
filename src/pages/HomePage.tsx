@@ -1,11 +1,11 @@
 import React, { Component } from "react";
-import {inject, observer} from "mobx-react";
+import { observer} from "mobx-react";
 import { makeObservable, observable, action } from "mobx";
 import RootStore from "../stores/RootStore";
-import {RouterContext, RouterStore} from "mobx-state-router";
-import fetchCategories from "../utils/fetchCategories";
+import {RouterContext} from "mobx-state-router";
 import ProductView from "../components/ProductView";
 import UserStore from "../stores/UserStore";
+import ApiStore from "../stores/apiStore";
 interface SearchPageProps {
     router?:any
 }
@@ -13,6 +13,7 @@ interface SearchPageProps {
 class HomePage extends Component<SearchPageProps> {
     rootStore = RootStore;
     userStore = UserStore;
+    apiStore = ApiStore
     searchQuery: string = ""; // Search input value
     selectedCategory: string = ""; // Selected category
     selectedUser: string = "1"; // Selected user ID
@@ -49,19 +50,19 @@ class HomePage extends Component<SearchPageProps> {
         // Initialize data
         const c:any =this.context;
         this.selectedUser = c.routerState.params.id || "1"
-        await this.rootStore.setSelectedUser(this.selectedUser);
-        await this.rootStore.setParticularCart(this.rootStore.selectedUser);
+        await this.rootStore.userStore.setSelectedUser(this.selectedUser);
+        await this.rootStore.cartStore.setParticularCart(this.rootStore.userStore.selectedUser);
         await this.fetchProducts();
         await this.fetchCategories();
         this.userStore = UserStore;
         await this.userStore.fetchUsers();
-        await this.rootStore.getUser();
+        await this.rootStore.userStore.getUser();
     }
 
     // Fetch categories
     fetchCategories = async () => {
         try {
-            const got = await fetchCategories();
+            const got = await this.apiStore.fetchCategories();
             this.setCategories(got);
         } catch (error) {
             console.error("Failed to fetch categories:", error);
@@ -100,31 +101,31 @@ class HomePage extends Component<SearchPageProps> {
         if (this.searchQuery && this.selectedCategory) {
             if(change) {
                 url = `${baseURL}/products/search?q=${this.searchQuery}`;
-                await this.rootStore.fetchData(url);
+                await this.rootStore.dataStore.fetchData(url);
             }
             this.filterProductsByCategory(this.selectedCategory);
         } else if (this.selectedCategory) {
             url = `${baseURL}/products/category/${this.selectedCategory}`;
-            await this.rootStore.fetchData(url);
+            await this.rootStore.dataStore.fetchData(url);
         } else if (this.searchQuery) {
             url = `${baseURL}/products/search?q=${this.searchQuery}`;
-            await this.rootStore.fetchData(url);
+            await this.rootStore.dataStore.fetchData(url);
         } else {
-            await this.rootStore.fetchData(url);
+            await this.rootStore.dataStore.fetchData(url);
         }
     };
 
     // Filter products by category
     filterProductsByCategory = (query: string) => {
-        const filteredData: any = this.rootStore.data.filter(
+        const filteredData: any = this.rootStore.dataStore.data.filter(
             (product) => product.category === query.toLowerCase()
         );
-        this.rootStore.setNewData(filteredData);
+        this.rootStore.dataStore.setNewData(filteredData);
     };
 
     // Pagination actions
     nextPage = () => {
-        const totalPages = Math.ceil(this.rootStore.newData.length / this.itemsPerPage);
+        const totalPages = Math.ceil(this.rootStore.dataStore.newData.length / this.itemsPerPage);
         if (this.currentPage < totalPages) {
             this.currentPage += 1;
         }
@@ -149,14 +150,14 @@ class HomePage extends Component<SearchPageProps> {
 
     handleUserChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
         const userIDNew = event.target.value;
-        await this.rootStore.setParticularCart(userIDNew);
+        await this.rootStore.cartStore.setParticularCart(userIDNew);
         this.selectedUser = userIDNew;
-        await this.rootStore.setSelectedUser(userIDNew);
-        await this.rootStore.getUser();
+        await this.rootStore.userStore.setSelectedUser(userIDNew);
+        await this.rootStore.userStore.getUser();
     };
 
     getTotalItemsInCart = () => {
-        const items = this.rootStore.cartMap.get(this.rootStore.selectedUser) || [];
+        const items = this.rootStore.cartStore.cartMap.get(this.rootStore.userStore.selectedUser) || [];
         if (!Array.isArray(items)) {
             console.warn("Cart items are not an array:", items);
             return 0; // Return 0 if items is not an array
@@ -166,15 +167,15 @@ class HomePage extends Component<SearchPageProps> {
 
     // Render page
     renderSearchPage() {
-        const { searchQuery, selectedCategory, categories, currentPage, itemsPerPage } = this;
+        const { selectedCategory, categories, currentPage, itemsPerPage } = this;
         const totalItemsInCart = this.getTotalItemsInCart();
         const c: any = this.context;
 
         // Pagination calculations
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        const paginatedProducts = this.rootStore.newData.slice(startIndex, endIndex);
-        const totalPages = Math.ceil(this.rootStore.newData.length / itemsPerPage);
+        const paginatedProducts = this.rootStore.dataStore.newData.slice(startIndex, endIndex);
+        const totalPages = Math.ceil(this.rootStore.dataStore.newData.length / itemsPerPage);
 
         return (
             <div>
@@ -197,7 +198,7 @@ class HomePage extends Component<SearchPageProps> {
                         </option>
                     ))}
                 </select>
-                <select value={this.rootStore.selectedUser} onChange={this.handleUserChange}>
+                <select onChange={this.handleUserChange}>
                     {this.userStore.users.map((user: { id: string; firstName: string }) => (
                         <option key={user.id} value={user.id}>
                             {user.firstName}
@@ -210,15 +211,15 @@ class HomePage extends Component<SearchPageProps> {
                         c.goTo("cart");
                     }}
                 >
-                    {this.rootStore.userName}'s cart
+                    {this.rootStore.userStore.selectedUser}'s cart
                     <br />
                     {totalItemsInCart}
                 </button>
                 <div>
-                    {this.rootStore.loading ? (
+                    {this.rootStore.statusStore.loading ? (
                         <div>Loading...</div>
-                    ) : this.rootStore.error ? (
-                        <div>Error: {this.rootStore.error.message}</div>
+                    ) : this.rootStore.statusStore.error ? (
+                        <div>Error: {this.rootStore.statusStore.error.message}</div>
                     ) : (
                         <>
                             {paginatedProducts.map((product) => (

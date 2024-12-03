@@ -1,11 +1,12 @@
 import {action, makeObservable, observable} from "mobx";
-import GetCart from "../utils/GetCart";
 import UserStore from "./UserStore";
+import ApiStore from "./apiStore";
 interface Type
 { id: number; title: string; price: number; thumbnail: string; description:string; category:string }
 interface cartType{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }
 class cartStore{
     userStore = UserStore
+    apiStore = ApiStore
     cartMap: Map<string, Array<cartType>> = new Map();
     constructor() {
         makeObservable(this, {
@@ -25,7 +26,7 @@ class cartStore{
         if(this.cartMap.has(uid))
             return
         else {
-            let currCartId = await GetCart(uid)
+            let currCartId = await this.apiStore.GetCart(uid)
             await this.setCartMap(uid, currCartId)
         }
     }

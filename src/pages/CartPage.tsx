@@ -14,16 +14,16 @@ class CartPage extends Component {
     }
     async componentDidMount() {
         const c : any = this.context
-        await this.rootStore.setSelectedUser(c.routerState.params.id || "1")
-        await this.rootStore.setParticularCart(this.rootStore.selectedUser);
-        await this.rootStore.setSelectedUser(this.rootStore.selectedUser)
-        await this.rootStore.getUser();
+        await this.rootStore.userStore.setSelectedUser(c.routerState.params.id || "1")
+        await this.rootStore.cartStore.setParticularCart(this.rootStore.userStore.selectedUser);
+        await this.rootStore.userStore.setSelectedUser(this.rootStore.userStore.selectedUser)
+        await this.rootStore.userStore.getUser();
     }
 
     // Calculate the total number of items in the cart
     getTotalItemsInCart = () => {
         let num: number = 0;
-        const items = this.rootStore.cartMap.get(this.rootStore.selectedUser) || [];
+        const items = this.rootStore.cartStore.cartMap.get(this.rootStore.userStore.selectedUser) || [];
         for (let i = 0; i < items.length; i++) {
             num += items[i].quantity;
         }
@@ -35,12 +35,12 @@ class CartPage extends Component {
         return (
             <div>
                 <div style={{ display: "flex" }}>
-                    <h1>{this.rootStore.userName}'s cart</h1>
+                    <h1>{this.rootStore.userStore.selectedUser}'s cart</h1>
                     <h3>Total Items: {totalItems}</h3>
                 </div>
-                {this.rootStore.cartMap.get(this.rootStore.selectedUser)?.length ? (
+                {this.rootStore.cartStore.cartMap.get(this.rootStore.userStore.selectedUser)?.length ? (
                     <div>
-                        {this.rootStore.cartMap.get(this.rootStore.selectedUser)?.map((item: any) => (
+                        {this.rootStore.cartStore.cartMap.get(this.rootStore.userStore.selectedUser)?.map((item: any) => (
                            <ProductView product={item} key={item.id} page="cart"/>
                         ))}
                     </div>

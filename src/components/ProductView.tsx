@@ -24,7 +24,7 @@ class productView extends Component<PropType>{
         this.rootStore = RootStore;
     }
     check(id: string): boolean {
-        const existingCartItems: Array<Type> = this.rootStore.cartMap.get(this.rootStore.selectedUser) || [];
+        const existingCartItems: Array<Type> = this.rootStore.cartStore.cartMap.get(this.rootStore.userStore.selectedUser) || [];
         if (Array.isArray(existingCartItems)) {
             return existingCartItems.find(item => item.id === Number(id)) !== undefined;
         }
@@ -32,7 +32,7 @@ class productView extends Component<PropType>{
     }
 
     checkQuantity(id: string): number {
-        const existingCartItems: Array<Type> = this.rootStore.cartMap.get(this.rootStore.selectedUser) || [];
+        const existingCartItems: Array<Type> = this.rootStore.cartStore.cartMap.get(this.rootStore.userStore.selectedUser) || [];
         if (Array.isArray(existingCartItems)) {
             const item = existingCartItems.find(item => item.id === Number(id));
             return item ? item.quantity : 0;
@@ -58,18 +58,18 @@ class productView extends Component<PropType>{
                     {((this.check(this.product.id) && this.props.page==="home") || (this.props.page==="cart"))? (
                         <div style={{display: "flex", alignItems: "center"}}>
                             <button className="removeFromCart"
-                                    onClick={() => this.rootStore.updateCartQuantity(this.product.id, -1)}>-
+                                    onClick={() => this.rootStore.cartStore.updateCartQuantity(this.product.id, -1)}>-
                             </button>
                             {(this.props.page === "home") ? <span>{this.checkQuantity(this.product.id)}</span> :
                                 <button className="removeFromCart"
-                                        onClick={() => this.rootStore.removeFromCart(this.product.id)}>Remove
+                                        onClick={() => this.rootStore.cartStore.removeFromCart(this.product.id)}>Remove
                                 </button>}
                             <button className="addToCart"
-                                    onClick={() => this.rootStore.updateCartQuantity(this.product.id, 1)}>+
+                                    onClick={() => this.rootStore.cartStore.updateCartQuantity(this.product.id, 1)}>+
                             </button>
                         </div>
                     ) : (
-                        <button className="addToCart" onClick={() => this.rootStore.addToCart(this.product)}>Add to Cart</button>
+                        <button className="addToCart" onClick={() => this.rootStore.cartStore.addToCart(this.product)}>Add to Cart</button>
                     )}
                 </div>
 
