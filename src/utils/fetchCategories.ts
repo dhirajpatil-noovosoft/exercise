@@ -1,8 +1,7 @@
 const fetchCategories = async () => {
     try {
-        const response = await fetch("https://dummyjson.com/products/categories");
-        const categories = await response.json();
-        return categories;
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/products/categories`);
+        return await response.json();
     } catch (error) {
         return {
             "error" : error

@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import ApiStore from "./ApiStore";
+import RootStore from "../stores/RootStore";
 import "../App.css"
 interface PropType {
     product: {
@@ -11,32 +11,34 @@ interface PropType {
     };
 }
 
+interface Type{ id: number; title: string; price: number; thumbnail: string; quantity: number }
 
 class productView extends Component<PropType>{
     product:any = []
-    apiStore = ApiStore
+    rootStore = RootStore
     constructor(props:any) {
         super(props);
         this.product = this.props.product
-        this.apiStore = ApiStore;
+        this.rootStore = RootStore;
     }
-    check (id:string){
-        const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.apiStore.cartMap.get(this.apiStore.userid) || [];
-        for(let i = 0 ; i < existsingCartItems?.length ; i++)
-            if(existsingCartItems[i].id === Number(id)) {
-                return true
-            }
-        return false
+    check(id: string): boolean {
+        const existingCartItems: Array<Type> = this.rootStore.cartMap.get(this.rootStore.userid) || [];
+        if (Array.isArray(existingCartItems)) {
+            return existingCartItems.find(item => item.id === Number(id)) !== undefined;
+        }
+        return false;
     }
 
-    checkQuantity(id:string){
-        const existsingCartItems:Array<{ id: number; title: string; price: number; thumbnail: string; quantity: number }> = this.apiStore.cartMap.get(this.apiStore.userid) || [];
-        for(let i = 0 ; i < existsingCartItems?.length ; i++)
-            if(existsingCartItems[i].id === Number(id)) {
-                return existsingCartItems[i].quantity
-            }
-        return 0
+
+    checkQuantity(id: string): number {
+        const existingCartItems: Array<Type> = this.rootStore.cartMap.get(this.rootStore.userid) || [];
+        if (Array.isArray(existingCartItems)) {
+            const item = existingCartItems.find(item => item.id === Number(id));
+            return item ? item.quantity : 0;
+        }
+        return 0;
     }
+
     render() {
         this.product = this.props.product
         return <>
@@ -53,12 +55,12 @@ class productView extends Component<PropType>{
                 <div className="product">
                     {this.check(this.product.id) ? (
                         <div style={{display: "flex", alignItems: "center"}}>
-                            <button className="removeFromCart" onClick={ () => this.apiStore.updateCartQuantity(this.product.id, -1)}>-</button>
+                            <button className="removeFromCart" onClick={ () => this.rootStore.updateCartQuantity(this.product.id, -1)}>-</button>
                             <span>{this.checkQuantity(this.product.id)}</span>
-                            <button className="addToCart" onClick={ () => this.apiStore.updateCartQuantity(this.product.id, 1)}>+</button>
+                            <button className="addToCart" onClick={ () => this.rootStore.updateCartQuantity(this.product.id, 1)}>+</button>
                         </div>
                     ) : (
-                        <button className="addToCart" onClick={() => this.apiStore.addToCart(this.product)}>Add to Cart</button>
+                        <button className="addToCart" onClick={() => this.rootStore.addToCart(this.product)}>Add to Cart</button>
                     )}
                 </div>
             </div>

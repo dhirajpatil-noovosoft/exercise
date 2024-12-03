@@ -8,8 +8,9 @@ class userStore{
             setUsers:action
         })
     }
+
     async fetchUsers(){
-        const response = await fetch('https://dummyjson.com/users?limit=0');
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users?limit=0`);
         let res = await response.json()
         this.setUsers(res.users)
     }

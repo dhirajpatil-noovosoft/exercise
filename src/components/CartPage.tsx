@@ -1,24 +1,24 @@
 import React, { Component } from "react";
 import { observer } from "mobx-react";
-import ApiStore from "./ApiStore";
+import RootStore from "../stores/RootStore";
 import "../App.css"
 @observer
 class CartPage extends Component {
-    apiStore = ApiStore;
+    rootStore = RootStore;
     constructor(props: any) {
         super(props);
-        this.apiStore = ApiStore;
+        this.rootStore = RootStore;
     }
     async componentDidMount() {
-        await this.apiStore.setParticularCart(this.apiStore.selectedUser);
-        await this.apiStore.setSelectedUser(this.apiStore.selectedUser)
-        await this.apiStore.getUser();
+        await this.rootStore.setParticularCart(this.rootStore.selectedUser);
+        await this.rootStore.setSelectedUser(this.rootStore.selectedUser)
+        await this.rootStore.getUser();
     }
 
     // Calculate the total number of items in the cart
     getTotalItemsInCart = () => {
         let num: number = 0;
-        const items = this.apiStore.cartMap.get(this.apiStore.userid) || [];
+        const items = this.rootStore.cartMap.get(this.rootStore.userid) || [];
         for (let i = 0; i < items.length; i++) {
             num += items[i].quantity;
         }
@@ -27,15 +27,16 @@ class CartPage extends Component {
 
     render() {
         const totalItems = this.getTotalItemsInCart(); // Get total items count
+        console.log("cart ", this.rootStore.cartMap.get(this.rootStore.userid))
         return (
             <div>
                 <div style={{ display: "flex" }}>
-                    <h1>{this.apiStore.userName}'s cart</h1>
+                    <h1>{this.rootStore.userName}'s cart</h1>
                     <h3>Total Items: {totalItems}</h3>
                 </div>
-                {this.apiStore.cartMap.get(this.apiStore.userid)?.length ? (
+                {this.rootStore.cartMap.get(this.rootStore.userid)?.length ? (
                     <div>
-                        {this.apiStore.cartMap.get(this.apiStore.userid)?.map((item: any) => (
+                        {this.rootStore.cartMap.get(this.rootStore.userid)?.map((item: any) => (
                             <div key={item.id} style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
                                 <img src={item.thumbnail} alt={item.title} style={{ width: "100px" }} />
                                 <div style={{ flex: 1 }}>
@@ -45,9 +46,9 @@ class CartPage extends Component {
                                     <p><strong>Category:</strong> {item.category}</p>
                                 </div>
                                 <div>
-                                    <button className="removeFromCart" onClick={() => this.apiStore.updateCartQuantity(item.id, -1)}>-</button>
-                                    <button className="removeFromCart" onClick={() => this.apiStore.removeFromCart(item.id)}>Remove</button>
-                                    <button className="addToCart" onClick={() => this.apiStore.updateCartQuantity(item.id, 1)}>+</button>
+                                    <button className="removeFromCart" onClick={() => this.rootStore.updateCartQuantity(item.id, -1)}>-</button>
+                                    <button className="removeFromCart" onClick={() => this.rootStore.removeFromCart(item.id)}>Remove</button>
+                                    <button className="addToCart" onClick={() => this.rootStore.updateCartQuantity(item.id, 1)}>+</button>
                                 </div>
                             </div>
                         ))}
