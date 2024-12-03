@@ -8,7 +8,9 @@ interface PropType {
         title: string;
         description: string;
         price: number;
+        quantity?:number;
     };
+    page?:string
 }
 
 interface Type{ id: number; title: string; price: number; thumbnail: string; quantity: number }
@@ -22,16 +24,15 @@ class productView extends Component<PropType>{
         this.rootStore = RootStore;
     }
     check(id: string): boolean {
-        const existingCartItems: Array<Type> = this.rootStore.cartMap.get(this.rootStore.userid) || [];
+        const existingCartItems: Array<Type> = this.rootStore.cartMap.get(this.rootStore.selectedUser) || [];
         if (Array.isArray(existingCartItems)) {
             return existingCartItems.find(item => item.id === Number(id)) !== undefined;
         }
         return false;
     }
 
-
     checkQuantity(id: string): number {
-        const existingCartItems: Array<Type> = this.rootStore.cartMap.get(this.rootStore.userid) || [];
+        const existingCartItems: Array<Type> = this.rootStore.cartMap.get(this.rootStore.selectedUser) || [];
         if (Array.isArray(existingCartItems)) {
             const item = existingCartItems.find(item => item.id === Number(id));
             return item ? item.quantity : 0;
@@ -51,18 +52,27 @@ class productView extends Component<PropType>{
                     <h3>Category : {this.product.category}</h3>
                     <p><strong>Description:</strong> {this.product.description}</p>
                     <p><strong>Price:</strong> ${this.product.price}</p>
+                    {this.props.page==="cart"&& <p><strong>Quantity : </strong> {this.product.quantity}</p>}
                 </div>
                 <div className="product">
-                    {this.check(this.product.id) ? (
+                    {((this.check(this.product.id) && this.props.page==="home") || (this.props.page==="cart"))? (
                         <div style={{display: "flex", alignItems: "center"}}>
-                            <button className="removeFromCart" onClick={ () => this.rootStore.updateCartQuantity(this.product.id, -1)}>-</button>
-                            <span>{this.checkQuantity(this.product.id)}</span>
-                            <button className="addToCart" onClick={ () => this.rootStore.updateCartQuantity(this.product.id, 1)}>+</button>
+                            <button className="removeFromCart"
+                                    onClick={() => this.rootStore.updateCartQuantity(this.product.id, -1)}>-
+                            </button>
+                            {(this.props.page === "home") ? <span>{this.checkQuantity(this.product.id)}</span> :
+                                <button className="removeFromCart"
+                                        onClick={() => this.rootStore.removeFromCart(this.product.id)}>Remove
+                                </button>}
+                            <button className="addToCart"
+                                    onClick={() => this.rootStore.updateCartQuantity(this.product.id, 1)}>+
+                            </button>
                         </div>
                     ) : (
                         <button className="addToCart" onClick={() => this.rootStore.addToCart(this.product)}>Add to Cart</button>
                     )}
                 </div>
+
             </div>
         </>
     }

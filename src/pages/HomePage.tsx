@@ -1,31 +1,27 @@
 import React, { Component } from "react";
-import { observer } from "mobx-react";
+import {inject, observer} from "mobx-react";
 import { makeObservable, observable, action } from "mobx";
 import RootStore from "../stores/RootStore";
-import { RouterContext } from "mobx-state-router";
+import {RouterContext, RouterStore} from "mobx-state-router";
 import fetchCategories from "../utils/fetchCategories";
-import ProductView from "./ProductView";
+import ProductView from "../components/ProductView";
 import UserStore from "../stores/UserStore";
-
-interface SearchPageProps {}
-
+interface SearchPageProps {
+    router?:any
+}
 @observer
-class SearchPage extends Component<SearchPageProps> {
+class HomePage extends Component<SearchPageProps> {
     rootStore = RootStore;
     userStore = UserStore;
-
     searchQuery: string = ""; // Search input value
     selectedCategory: string = ""; // Selected category
     selectedUser: string = "1"; // Selected user ID
     categories: { slug: string; name: string; url: string }[] = []; // Categories array
-
     currentPage: number = 1; // Current page number
     itemsPerPage: number = 10; // Number of items per page
     static contextType = RouterContext;
-
-    constructor(props: any) {
+    constructor(props:any) {
         super(props);
-
         // Making state observable
         makeObservable(this, {
             searchQuery: observable,
@@ -35,17 +31,30 @@ class SearchPage extends Component<SearchPageProps> {
             setSelectedCategory: action,
             nextPage: action,
             prevPage: action,
+            itemsPerPage:observable,
+            setItemsPerPage:action
         });
+        this.setItemsPerPage = this.setItemsPerPage.bind(this)
+        this.handleNumberOfItemsChange = this.handleNumberOfItemsChange.bind(this)
     }
-
+    debounce(fn:any, delay:any){
+        let timer:any;
+        return function (...args:any){
+            clearTimeout(timer)
+            console.log("value", ...args[0].target.value)
+            timer = setTimeout(()=> fn(...args), delay)
+        }
+    }
     async componentDidMount() {
         // Initialize data
+        const c:any =this.context;
+        this.selectedUser = c.routerState.params.id || "1"
+        await this.rootStore.setSelectedUser(this.selectedUser);
         await this.rootStore.setParticularCart(this.rootStore.selectedUser);
         await this.fetchProducts();
         await this.fetchCategories();
         this.userStore = UserStore;
         await this.userStore.fetchUsers();
-        await this.rootStore.setSelectedUser(this.selectedUser);
         await this.rootStore.getUser();
     }
 
@@ -58,7 +67,13 @@ class SearchPage extends Component<SearchPageProps> {
             console.error("Failed to fetch categories:", error);
         }
     };
-
+    handleNumberOfItemsChange(event: React.ChangeEvent<HTMLInputElement>){
+        this.setItemsPerPage(Number(event.target.value))
+    }
+    setItemsPerPage(quantity:number)
+    {
+        this.itemsPerPage = quantity
+    }
     setCategories = (categories: { slug: string; name: string; url: string }[]) => {
         this.categories = categories;
     };
@@ -67,7 +82,7 @@ class SearchPage extends Component<SearchPageProps> {
     setSearchQuery = async (query: string) => {
         this.searchQuery = query;
         this.currentPage = 1; // Reset to the first page on new search
-        await this.fetchProducts();
+        await this.fetchProducts("query");
     };
 
     // Update selected category and fetch products
@@ -78,13 +93,15 @@ class SearchPage extends Component<SearchPageProps> {
     };
 
     // Fetch products based on search and category
-    fetchProducts = async () => {
+    fetchProducts = async (change?:string) => {
         const baseURL = process.env.REACT_APP_API_BASE_URL; // Fetch from .env
         let url = `${baseURL}/products?limit=0`; // Default URL
 
         if (this.searchQuery && this.selectedCategory) {
-            url = `${baseURL}/products/search?q=${this.searchQuery}`;
-            await this.rootStore.fetchData(url);
+            if(change) {
+                url = `${baseURL}/products/search?q=${this.searchQuery}`;
+                await this.rootStore.fetchData(url);
+            }
             this.filterProductsByCategory(this.selectedCategory);
         } else if (this.selectedCategory) {
             url = `${baseURL}/products/category/${this.selectedCategory}`;
@@ -121,7 +138,7 @@ class SearchPage extends Component<SearchPageProps> {
 
     // Event handlers
     handleSearchChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const query = event.target.value;
+        let query = event.target.value;
         await this.setSearchQuery(query);
     };
 
@@ -139,7 +156,7 @@ class SearchPage extends Component<SearchPageProps> {
     };
 
     getTotalItemsInCart = () => {
-        const items = this.rootStore.cartMap.get(this.rootStore.userid) || [];
+        const items = this.rootStore.cartMap.get(this.rootStore.selectedUser) || [];
         if (!Array.isArray(items)) {
             console.warn("Cart items are not an array:", items);
             return 0; // Return 0 if items is not an array
@@ -151,7 +168,6 @@ class SearchPage extends Component<SearchPageProps> {
     renderSearchPage() {
         const { searchQuery, selectedCategory, categories, currentPage, itemsPerPage } = this;
         const totalItemsInCart = this.getTotalItemsInCart();
-
         const c: any = this.context;
 
         // Pagination calculations
@@ -164,8 +180,7 @@ class SearchPage extends Component<SearchPageProps> {
             <div>
                 <input
                     type="text"
-                    value={searchQuery}
-                    onChange={this.handleSearchChange}
+                    onChange={this.debounce(this.handleSearchChange, 500)}
                     placeholder="Search for products"
                     style={{ padding: "8px", width: "50%", marginBottom: "20px" }}
                 />
@@ -207,7 +222,7 @@ class SearchPage extends Component<SearchPageProps> {
                     ) : (
                         <>
                             {paginatedProducts.map((product) => (
-                                <ProductView key={product.id} product={product} />
+                                <ProductView key={product.id} product={product} page={"home"} />
                             ))}
                             <div>
                                 {/* Pagination Controls */}
@@ -223,6 +238,11 @@ class SearchPage extends Component<SearchPageProps> {
                                 >
                                     Next
                                 </button>
+                                <input
+                                    value={itemsPerPage}
+                                    type="number"
+                                    onChange={this.handleNumberOfItemsChange}
+                                />
                             </div>
                         </>
                     )}
@@ -236,4 +256,4 @@ class SearchPage extends Component<SearchPageProps> {
     }
 }
 
-export { SearchPage };
+export { HomePage };

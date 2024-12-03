@@ -2,7 +2,7 @@ import {makeObservable, observable, action} from "mobx";
 import GetCart from "../utils/GetCart";
 import UserStore from "./UserStore";
 import userStore from "./UserStore";
-import updateCart from "../utils/updateCart";
+// import updateCart from "../utils/updateCart"; // uncomment this if u want updation logs on cart update
 interface Type
 { id: number; title: string; price: number; thumbnail: string; description:string; category:string }
 interface cartType{ id: number; title: string; price: number; thumbnail: string; quantity: number; category:string }
@@ -11,10 +11,9 @@ class RootStores {
     data: Type[] = [];
     newData: Type[] = [];
     loading: boolean = false;
-    userid : string  = "1";
+    selectedUser : string  = "";
     userName:string = '';
     userStore:typeof userStore = UserStore;
-    selectedUser:string = "1"
     cartMap: Map<string, Array<cartType>> = new Map();
 
     constructor() {
@@ -27,10 +26,8 @@ class RootStores {
             setNewData: action,
             setLoading: action,
             setError: action,
-            userid:observable,
             getUser:action,
             userName:observable,
-            setUserId:action,
             selectedUser:observable,
             setSelectedUser:action,
             cartMap:observable,
@@ -46,12 +43,12 @@ class RootStores {
 
     setSelectedUser = async(User: string) => {
         this.selectedUser = User;
-        this.setUserId(this.selectedUser)
+        this.setselectedUser(this.selectedUser)
         await this.setParticularCart(User)
     };
 
-    setUserId(id:string){
-        this.userid = id
+    setselectedUser(id:string){
+        this.selectedUser = id
     }
     // Set the data to the store
     setData(data: Type[]) {
@@ -63,7 +60,7 @@ class RootStores {
         this.newData = newData;
     }
 
-    // Set loading state
+    // Set loading state 
     setLoading(loading: boolean) {
         this.loading = loading;
     }
@@ -76,7 +73,7 @@ class RootStores {
             const res = result.products
             this.setNewData(res || result); // Assuming 'products' is the key in the response
             this.setData(res || result);
-            await this.setParticularCart(this.userid);
+            await this.setParticularCart(this.selectedUser);
         } catch (err) {
             this.setError(err);
         } finally {
@@ -89,7 +86,7 @@ class RootStores {
     }
     async setCartMap(uid:string, cartData:Array<cartType>){
         this.cartMap.set(uid, cartData)
-        await updateCart(Number(this.userid), cartData)
+        // await updateCart(Number(this.selectedUser), cartData) // uncomment this if u want cart updation requests
     }
     async setParticularCart(uid:string){
         if(this.cartMap.has(uid))
@@ -101,55 +98,50 @@ class RootStores {
     }
     // Add product to cart
     async addToCart(product: Type) {
-        if(!this.cartMap.has(this.userid)){
-            await this.setCartMap(this.userid, [])
+        if(!this.cartMap.has(this.selectedUser)){
+            await this.setCartMap(this.selectedUser, [])
         }
+        let existingCartItems:Array<cartType> = this.cartMap.get(this.selectedUser) || []
         let existingProduct:number = -1
-        let array:Array<cartType> = []
-        let existingCartItems:Array<cartType> = this.cartMap.get(this.userid) || []
-        for(let i = 0 ; i < existingCartItems?.length ; i++)
-        {
-            if(existingCartItems[i].id === product.id){
-                existingCartItems[i].quantity += 1;
-                existingProduct = i
+        const array = existingCartItems.map((item, index) => {
+            if (item.id === product.id) {
+                item.quantity += 1;
+                existingProduct = index;
             }
-            array.push(existingCartItems[i])
-        }
+            return item;
+        });
         if (existingProduct === -1) {
             array.push({...product, quantity:1});
         }
-        this.setCartMap(this.userid, array)
+        await this.setCartMap(this.selectedUser, array)
     }
-
-    // Remove product from cart
+    // to remove from cart
     async removeFromCart(productId: number) {
-        let newCartItems:Array<cartType> = []
-        const existingCartItems:Array<cartType> = this.cartMap.get(this.userid) || []
-        for(let i = 0 ; i < existingCartItems?.length ; i++)
-            if(existingCartItems[i].id !== productId)
-                newCartItems.push(existingCartItems[i])
-        await this.setCartMap(this.userid, newCartItems )
+        const existingCartItems: Array<cartType> = this.cartMap.get(this.selectedUser) || [];
+        const newCartItems = existingCartItems.filter(item => item.id !== productId);
+        await this.setCartMap(this.selectedUser, newCartItems);
     }
 
     // Update product quantity in cart
     async updateCartQuantity(productId: number, change: number) {
-        const existsingCartItems:Array<cartType> = this.cartMap.get(this.userid) || [];
-        let newItemCart:Array<cartType> = []
-        for(let i = 0 ; i < existsingCartItems?.length ; i++) {
-            if (existsingCartItems[i].id === productId) {
-                existsingCartItems[i].quantity += change
-            }
-            if(existsingCartItems[i].quantity !== 0)
-                newItemCart.push(existsingCartItems[i])
-        }
-        await this.setCartMap(this.userid, newItemCart)
+        const existingCartItems: Array<cartType> = this.cartMap.get(this.selectedUser) || [];
+        const newCartItems = existingCartItems
+            .map(item => {
+                if (item.id === productId) {
+                    item.quantity += change;
+                }
+                return item;
+            })
+            .filter(item => item.quantity !== 0);
+        await this.setCartMap(this.selectedUser, newCartItems);
     }
+
     setUserName(name:string)
     {
         this.userName = name
     }
     async getUser(){
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/${this.userid}`);
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/${this.selectedUser}`);
         const res = await response.json()
         this.setUserName(res.firstName)
     }

@@ -1,6 +1,8 @@
-import {SearchPage} from "./components/SearchPage";
-import {CartPage} from "./components/CartPage";
+import {HomePage} from "./pages/HomePage";
+import {CartPage} from "./pages/CartPage";
 export const viewMap = {
-    home: <SearchPage />,
-    cart: <CartPage />
+    home: <HomePage />,
+    cart: <CartPage />,
+    homeWithID: <HomePage />,
+    cartWithID:<CartPage />
 };
